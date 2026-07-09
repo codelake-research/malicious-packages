@@ -1,0 +1,42 @@
+{
+  "modified": "2026-07-09T00:00:00Z",
+  "published": "2026-07-09T00:00:00Z",
+  "schema_version": "1.6.0",
+  "affected": [
+    {
+      "package": {
+        "ecosystem": "npm",
+        "name": "antsrcsrctest"
+      },
+      "versions": [
+        "1.0.0"
+      ]
+    }
+  ],
+  "details": "The npm package `antsrcsrctest` is a supply-chain credential- and environment-stealer disguised as a benign date utility (its `index.js` exports a harmless `formatDate()` function as a decoy). Its real behaviour lives in an install script.\n\nA `preinstall` lifecycle hook (`preinstall: node preinstall.js`) executes automatically on `npm install`, before the package is ever imported. The script fingerprints the host and container (`/.dockerenv`, `/proc/1/cgroup`, `/proc/self/mountinfo`), runs local recon commands (`id`, `whoami`, `hostname`, `ps aux`) via `child_process.execSync`, queries the cloud instance-metadata service at `http://100.100.100.200/latest/meta-data/` (Alibaba Cloud IMDS) — explicitly walking `/latest/meta-data/ram/security-credentials/` to obtain the host's temporary RAM/IAM role credentials — and collects the entire `process.env`. It then exfiltrates the full recon object and the environment via HTTP POST to the hardcoded external IP `http://101.35.44.248` (paths `/` and `/env`). All error paths are swallowed so the install appears normal. The package name targets an internal `antsrc*` namespace, consistent with a dependency-confusion attack against build environments.\n\nDetected and classified independently by codelake Research from the live npm feed on 2026-07-09; at the time of reporting the package was still live on npm and not present in OSV or GHSA (a first-catch).",
+  "credits": [
+    {
+      "name": "codelake Research",
+      "type": "FINDER",
+      "contact": [
+        "https://research.codelake.dev/advisories/clr-2026-2999-antsrcsrctest"
+      ]
+    }
+  ],
+  "references": [
+    {
+      "type": "ADVISORY",
+      "url": "https://research.codelake.dev/advisories/clr-2026-2999-antsrcsrctest"
+    }
+  ],
+  "database_specific": {
+    "iocs": {
+      "ips": [
+        "101.35.44.248"
+      ],
+      "hashes": [
+        "sha256:b4a1a62c75f239d8201c65cdcda5a21e90eff76a41562a2a1902403ccd4c5f9d"
+      ]
+    }
+  }
+}
